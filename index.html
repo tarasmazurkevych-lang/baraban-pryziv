@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Барабан призів · Тестова сторінка</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Manrope:wght@400;500;600;700&display=swap&subset=cyrillic,cyrillic-ext,latin" rel="stylesheet">
+<style>
+  :root{
+    /* Фірмові кольори "Родинна ковбаска" (ТМ Barkom) */
+    --rk-red:#C8102E; --rk-red-d:#9E0B22; --rk-red-dd:#7d0a1b;
+    --bordo-3:#54101a;
+    --gold:#D9A93F; --gold-soft:#F0CC7A; --cream:#FBF3E4; --cream-2:#F4E7CE;
+    --ink:#3a0d12;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;min-height:100%}
+  body{
+    font-family:'Manrope',system-ui,sans-serif;
+    color:var(--cream);
+    background:radial-gradient(120% 120% at 50% 0%, var(--rk-red) 0%, var(--rk-red-d) 48%, var(--rk-red-dd) 100%);
+    background-attachment:fixed;
+    min-height:100vh;
+    display:flex;flex-direction:column;align-items:center;
+    padding:18px 16px 48px;
+    text-align:center;
+    overflow-x:hidden;
+  }
+  .brand{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:4px}
+  .brand img{height:74px;width:auto;filter:drop-shadow(0 4px 10px rgba(0,0,0,.3));
+    background:var(--cream);padding:10px 16px;border-radius:16px}
+  .brand .slogan{font-family:'Unbounded',sans-serif;font-weight:500;font-size:12px;
+    letter-spacing:.28em;text-transform:uppercase;color:var(--gold-soft)}
+  .demo-badge{
+    font-family:'Manrope',sans-serif;font-weight:700;font-size:11px;letter-spacing:.18em;
+    color:var(--gold-soft);text-transform:uppercase;opacity:.85;
+    border:1px solid rgba(217,169,63,.4);border-radius:999px;padding:6px 14px;margin-top:6px;
+  }
+  h1{
+    font-family:'Unbounded',sans-serif;font-weight:800;
+    font-size:clamp(30px,8.5vw,46px);line-height:1.04;margin:14px 0 4px;
+    text-shadow:0 2px 0 rgba(0,0,0,.25);
+  }
+  h1 .gold{color:var(--gold-soft)}
+  .phone-line{font-weight:600;font-size:clamp(15px,4.2vw,18px);color:#f5e7c7;opacity:.92;margin-bottom:14px;letter-spacing:.02em}
+
+  /* ---- WHEEL ---- */
+  .stage{position:relative;width:min(86vw,420px);aspect-ratio:1/1;margin:6px auto 8px}
+  .pointer{
+    position:absolute;top:-6px;left:50%;transform:translateX(-50%);z-index:6;
+    width:0;height:0;border-left:18px solid transparent;border-right:18px solid transparent;
+    border-top:30px solid var(--gold);
+    filter:drop-shadow(0 3px 3px rgba(0,0,0,.4));
+  }
+  .pointer::after{content:"";position:absolute;top:-30px;left:-6px;width:12px;height:12px;border-radius:50%;background:var(--gold-soft)}
+  .rim{
+    position:absolute;inset:0;border-radius:50%;
+    background:
+      radial-gradient(circle at 50% 35%, var(--gold-soft), var(--gold) 55%, #a87a25 100%);
+    box-shadow:0 14px 40px rgba(0,0,0,.45), inset 0 0 0 3px rgba(255,255,255,.15);
+    padding:18px;
+  }
+  .lamps{position:absolute;inset:0;z-index:4;pointer-events:none}
+  .lamp{position:absolute;width:11px;height:11px;border-radius:50%;
+    background:radial-gradient(circle at 35% 35%,#fff,var(--gold-soft) 55%,#9a6e1f);
+    margin:-5.5px;box-shadow:0 0 6px rgba(240,204,122,.7);
+    animation:blink 1.6s infinite}
+  @keyframes blink{0%,100%{opacity:.35;transform:scale(.8)}50%{opacity:1;transform:scale(1.15);box-shadow:0 0 12px 2px rgba(240,204,122,.95)}}
+  .wheel-wrap{position:absolute;inset:18px;border-radius:50%;overflow:hidden;background:var(--bordo-3);
+    box-shadow:inset 0 0 0 4px var(--gold), inset 0 0 30px rgba(0,0,0,.55)}
+  #wheel{width:100%;height:100%;display:block;
+    transition:transform 5.5s cubic-bezier(.12,.65,.07,1)}
+  .hub{
+    position:absolute;top:50%;left:50%;width:24%;height:24%;transform:translate(-50%,-50%);
+    border-radius:50%;z-index:5;
+    background:radial-gradient(circle at 38% 35%,var(--gold-soft),var(--gold) 60%,#a87a25 100%);
+    box-shadow:0 4px 12px rgba(0,0,0,.4), inset 0 0 0 3px rgba(255,255,255,.25);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .hub span{font-family:'Unbounded',sans-serif;font-weight:700;color:var(--bordo-3);
+    font-size:clamp(11px,3.2vw,15px);letter-spacing:.04em}
+
+  /* ---- BUTTON ---- */
+  .btn{
+    font-family:'Unbounded',sans-serif;font-weight:700;font-size:clamp(16px,4.6vw,20px);
+    color:var(--bordo-3);border:none;cursor:pointer;
+    padding:16px 40px;border-radius:999px;margin-top:10px;
+    background:linear-gradient(180deg,var(--gold-soft),var(--gold) 70%,#bb8a2c);
+    box-shadow:0 8px 0 #8a6420, 0 12px 22px rgba(0,0,0,.4);
+    transition:transform .08s ease, box-shadow .08s ease;
+    letter-spacing:.02em;
+  }
+  .btn:active:not(:disabled){transform:translateY(6px);box-shadow:0 2px 0 #8a6420,0 6px 12px rgba(0,0,0,.4)}
+  .btn:disabled{filter:grayscale(.55) brightness(.85);cursor:not-allowed;box-shadow:0 6px 0 #6d5018}
+
+  /* ---- RESULT / MESSAGES ---- */
+  .msg{max-width:440px;margin:18px auto 0;font-size:16px;line-height:1.5;min-height:24px}
+  .result-amount{font-family:'Unbounded',sans-serif;font-weight:800;font-size:clamp(40px,12vw,68px);
+    color:var(--gold-soft);text-shadow:0 3px 0 rgba(0,0,0,.3);margin:6px 0;display:none}
+  .result-amount.show{display:block;animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
+  @keyframes pop{0%{transform:scale(.3);opacity:0}100%{transform:scale(1);opacity:1}}
+  .credit-note{font-weight:600;color:#f5e7c7}
+  .lose-text{font-family:'Unbounded',sans-serif;font-weight:600;font-size:clamp(20px,6vw,30px);color:var(--gold-soft)}
+
+  /* error / no-number block */
+  .notice{max-width:460px;background:rgba(0,0,0,.22);border:1px solid rgba(217,169,63,.35);
+    border-radius:18px;padding:22px 20px;margin-top:30px}
+  .notice h2{font-family:'Unbounded',sans-serif;font-size:22px;color:var(--gold-soft);margin:0 0 10px}
+  .notice code{display:inline-block;background:rgba(0,0,0,.35);color:#f5e7c7;padding:6px 10px;border-radius:8px;
+    font-size:13px;margin-top:8px;word-break:break-all}
+
+  .hidden{display:none!important}
+
+  /* confetti */
+  #confetti{position:fixed;inset:0;pointer-events:none;z-index:50;overflow:hidden}
+  .conf{position:absolute;top:-14px;width:9px;height:14px;opacity:.95;will-change:transform}
+
+  @media (prefers-reduced-motion:reduce){
+    #wheel{transition:transform 1.2s ease-out}
+    .lamp{animation:none;opacity:.9}
+    .result-amount.show{animation:none}
+  }
+</style>
+</head>
+<body>
+  <div class="demo-badge">Тестова сторінка · Демо для команди</div>
+  <div class="brand">
+    <img src="https://rodynna-kovbaska.ua/img/logo_vertical.png" alt="Родинна ковбаска"
+         onerror="this.style.display='none'">
+    <div class="slogan">Своє. Свіже.</div>
+  </div>
+  <h1>Барабан <span class="gold">призів</span></h1>
+  <div class="phone-line" id="phoneLine"></div>
+
+  <!-- main game -->
+  <div id="game" class="hidden">
+    <div class="stage">
+      <div class="pointer"></div>
+      <div class="rim"></div>
+      <div class="lamps" id="lamps"></div>
+      <div class="wheel-wrap">
+        <svg id="wheel" viewBox="0 0 400 400" aria-label="Колесо призів"></svg>
+      </div>
+      <div class="hub"><span>КРУТИ!</span></div>
+    </div>
+    <button id="spinBtn" class="btn">Крутити барабан</button>
+    <div class="result-amount" id="amount"></div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <!-- no-number / used notice -->
+  <div id="notice" class="notice hidden">
+    <h2 id="noticeTitle"></h2>
+    <div id="noticeBody"></div>
+  </div>
+
+  <div id="confetti"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- 1. PHONE FROM URL ----------
+  // Номер передається у посиланні після "?". Беремо лише цифри,
+  // тож працюють формати: ?380630401041 , ?t=380... , ?+38(063)...
+  var rawQuery = decodeURIComponent(location.search.replace(/^\?/, ""));
+  var digits = rawQuery.replace(/\D/g, "");
+
+  // нормалізація до національного формату 0XXXXXXXXX (10 цифр)
+  function normalize(d){
+    if(!d) return null;
+    if(d.length >= 12 && d.indexOf("380") === 0) d = d.slice(2);      // 380XXXXXXXXX -> 0XXXXXXXXX
+    else if(d.length === 11 && d.indexOf("80") === 0) d = "0" + d.slice(2);
+    else if(d.length === 9) d = "0" + d;                              // XXXXXXXXX -> 0XXXXXXXXX
+    // якщо вже 0XXXXXXXXX (10) — лишаємо як є
+    if(d.length > 10) d = d.slice(-10);
+    return d;
+  }
+  function displayPhone(nat){
+    // 0XX XXX XX XX -> +38 0XX XXX XX XX
+    var m = nat.match(/^(0\d{2})(\d{3})(\d{2})(\d{2})$/);
+    if(!m) return "+38 " + nat;
+    return "+38 " + m[1] + " " + m[2] + " " + m[3] + " " + m[4];
+  }
+
+  var gameEl = document.getElementById("game");
+  var noticeEl = document.getElementById("notice");
+  var noticeTitle = document.getElementById("noticeTitle");
+  var noticeBody = document.getElementById("noticeBody");
+  var phoneLineEl = document.getElementById("phoneLine");
+
+  function showNotice(title, htmlBody){
+    gameEl.classList.add("hidden");
+    noticeEl.classList.remove("hidden");
+    noticeTitle.textContent = title;
+    noticeBody.innerHTML = htmlBody;
+  }
+
+  if(digits.length < 9){
+    showNotice("Номер не передано",
+      "Щоб взяти участь, відкрийте посилання з вашим номером телефону після знака «?».<br>" +
+      "Приклад правильного посилання:<br><code>" + location.origin + location.pathname + "?380630401041</code>");
+    return;
+  }
+
+  var phone = normalize(digits);
+  var phoneFull = "+38" + (phone ? phone.slice(1) : "");
+  phoneLineEl.textContent = "Учасник: " + displayPhone(phone);
+
+  // ---------- 2. REPEAT PARTICIPATION CHECK ----------
+  var STORE_KEY = "baraban_used_numbers";
+  function getUsed(){
+    try { return JSON.parse(localStorage.getItem(STORE_KEY) || "[]"); }
+    catch(e){ return []; }
+  }
+  function markUsed(n){
+    var arr = getUsed();
+    if(arr.indexOf(n) === -1){ arr.push(n); localStorage.setItem(STORE_KEY, JSON.stringify(arr)); }
+  }
+
+  if(getUsed().indexOf(phone) !== -1){
+    showNotice("Цей номер уже брав участь",
+      "Один номер — одна спроба.<br>Номер <b>" + displayPhone(phone) + "</b> вже використав свою спробу в барабані.");
+    return;
+  }
+
+  // все добре — показуємо гру
+  gameEl.classList.remove("hidden");
+
+  // ---------- 3. WHEEL CONFIG ----------
+  // 15 секторів: 10 грошових + 5 "наступного разу", чергуються
+  var SECTORS = [
+    {type:"win",  amount:10},
+    {type:"lose"},
+    {type:"win",  amount:100},
+    {type:"win",  amount:20},
+    {type:"lose"},
+    {type:"win",  amount:200},
+    {type:"win",  amount:50},
+    {type:"lose"},
+    {type:"win",  amount:300},
+    {type:"win",  amount:150},
+    {type:"lose"},
+    {type:"win",  amount:400},
+    {type:"win",  amount:250},
+    {type:"lose"},
+    {type:"win",  amount:500}
+  ];
+  var N = SECTORS.length;          // 15
+  var SEG = 360 / N;               // 24°
+
+  // ---------- build SVG wheel ----------
+  var svg = document.getElementById("wheel");
+  var SVGNS = "http://www.w3.org/2000/svg";
+  var cx = 200, cy = 200, R = 200;
+  // clock-angle (clockwise from top) -> point
+  function pt(angDeg, r){
+    var a = (angDeg) * Math.PI/180;
+    return [cx + r*Math.sin(a), cy - r*Math.cos(a)];
+  }
+  SECTORS.forEach(function(s, i){
+    var a0 = i*SEG, a1 = (i+1)*SEG, mid = a0 + SEG/2;
+    var p0 = pt(a0, R), p1 = pt(a1, R);
+    var path = document.createElementNS(SVGNS,"path");
+    path.setAttribute("d", "M"+cx+" "+cy+" L"+p0[0].toFixed(2)+" "+p0[1].toFixed(2)+
+      " A"+R+" "+R+" 0 0 1 "+p1[0].toFixed(2)+" "+p1[1].toFixed(2)+" Z");
+    path.setAttribute("fill", s.type==="win" ? "#FBF3E4" : "#54101a");
+    path.setAttribute("stroke", "#D9A93F");
+    path.setAttribute("stroke-width","2");
+    svg.appendChild(path);
+
+    // label
+    var lp = pt(mid, R*0.64);
+    if(s.type==="win"){
+      var t = document.createElementNS(SVGNS,"text");
+      t.setAttribute("x", lp[0].toFixed(1)); t.setAttribute("y", lp[1].toFixed(1));
+      t.setAttribute("fill","#7A1622");
+      t.setAttribute("font-family","Unbounded, sans-serif");
+      t.setAttribute("font-weight","700");
+      t.setAttribute("font-size","19");
+      t.setAttribute("text-anchor","middle");
+      t.setAttribute("dominant-baseline","central");
+      t.setAttribute("transform","rotate("+mid.toFixed(2)+" "+lp[0].toFixed(1)+" "+lp[1].toFixed(1)+")");
+      t.textContent = s.amount;
+      svg.appendChild(t);
+      var u = document.createElementNS(SVGNS,"text");
+      var up = pt(mid, R*0.82);
+      u.setAttribute("x", up[0].toFixed(1)); u.setAttribute("y", up[1].toFixed(1));
+      u.setAttribute("fill","#9a7a2a");
+      u.setAttribute("font-family","Manrope, sans-serif");
+      u.setAttribute("font-weight","700");
+      u.setAttribute("font-size","11");
+      u.setAttribute("text-anchor","middle");
+      u.setAttribute("dominant-baseline","central");
+      u.setAttribute("transform","rotate("+mid.toFixed(2)+" "+up[0].toFixed(1)+" "+up[1].toFixed(1)+")");
+      u.textContent = "грн";
+      svg.appendChild(u);
+    } else {
+      var star = document.createElementNS(SVGNS,"text");
+      star.setAttribute("x", lp[0].toFixed(1)); star.setAttribute("y", lp[1].toFixed(1));
+      star.setAttribute("fill","#D9A93F");
+      star.setAttribute("font-size","26");
+      star.setAttribute("text-anchor","middle");
+      star.setAttribute("dominant-baseline","central");
+      star.setAttribute("transform","rotate("+mid.toFixed(2)+" "+lp[0].toFixed(1)+" "+lp[1].toFixed(1)+")");
+      star.textContent = "★";
+      svg.appendChild(star);
+    }
+  });
+
+  // ---------- lamps ----------
+  var lampsEl = document.getElementById("lamps");
+  var LAMPS = 16;
+  for(var k=0;k<LAMPS;k++){
+    var ang = (k/LAMPS)*2*Math.PI;
+    var lr = 50; // % radius along rim
+    var lamp = document.createElement("div");
+    lamp.className = "lamp";
+    lamp.style.left = (50 + lr*Math.sin(ang)).toFixed(2) + "%";
+    lamp.style.top  = (50 - lr*Math.cos(ang)).toFixed(2) + "%";
+    lamp.style.animationDelay = (k*0.1).toFixed(2) + "s";
+    lampsEl.appendChild(lamp);
+  }
+
+  // ---------- 4. RESULT BY WEIGHTS (before spin) ----------
+  function pickResult(){
+    // 30% програш, 70% виграш
+    if(Math.random()*100 < 30){
+      return {type:"lose"};
+    }
+    // ваги всередині виграшів (сума = 100)
+    var winWeights = [
+      {amount:10,  w:20},
+      {amount:20,  w:17},
+      {amount:50,  w:15},
+      {amount:100, w:13},
+      {amount:150, w:11},
+      {amount:200, w:9},
+      {amount:250, w:7},
+      {amount:300, w:4},
+      {amount:400, w:2.5},
+      {amount:500, w:1.5}
+    ];
+    var total = winWeights.reduce(function(a,b){return a+b.w;},0);
+    var r = Math.random()*total, acc = 0;
+    for(var i=0;i<winWeights.length;i++){
+      acc += winWeights[i].w;
+      if(r <= acc) return {type:"win", amount:winWeights[i].amount};
+    }
+    return {type:"win", amount:winWeights[0].amount};
+  }
+
+  // знайти індекс сектора під результат
+  function sectorIndexFor(res){
+    var candidates = [];
+    SECTORS.forEach(function(s,i){
+      if(res.type==="lose" && s.type==="lose") candidates.push(i);
+      if(res.type==="win" && s.type==="win" && s.amount===res.amount) candidates.push(i);
+    });
+    return candidates[Math.floor(Math.random()*candidates.length)];
+  }
+
+  // ---------- 6. CREDIT STUB ----------
+  function creditPrize(phone, amount){
+    // TODO: тут у майбутньому буде реальний виклик API нарахування
+    // (наприклад, POST у CRM/лояльність з номером і сумою).
+    console.log("[creditPrize] нарахування призу", {
+      phone: phone,
+      amount: amount,
+      time: new Date().toISOString()
+    });
+  }
+
+  // ---------- 5. SPIN ----------
+  var wheel = svg;
+  var btn = document.getElementById("spinBtn");
+  var amountEl = document.getElementById("amount");
+  var msgEl = document.getElementById("msg");
+  var spinning = false;
+  var currentRotation = 0;
+
+  btn.addEventListener("click", function(){
+    if(spinning) return;
+    spinning = true;
+    btn.disabled = true;
+
+    var res = pickResult();                 // результат визначено ДО обертання
+    var idx = sectorIndexFor(res);
+    var centerAngle = idx*SEG + SEG/2;       // clock-angle центру сектора
+    var jitter = (Math.random()*2 - 1) * (SEG/2 - 3); // зміщення в межах сектора
+    var spins = 5 + Math.floor(Math.random()*3); // 5–7 повних обертів
+
+    // докрутити так, щоб центр сектора став під вказівником (угорі = 0)
+    var target = 360*spins - centerAngle - jitter;
+    currentRotation += target;
+    wheel.style.transform = "rotate(" + currentRotation + "deg)";
+
+    var DURATION = 5500;
+    if(window.matchMedia && window.matchMedia("(prefers-reduced-motion:reduce)").matches){
+      DURATION = 1200;
+    }
+
+    setTimeout(function(){
+      finish(res);
+    }, DURATION + 120);
+  });
+
+  function finish(res){
+    markUsed(phone);                         // номер записано як використаний
+    btn.textContent = "Спробу використано";
+    btn.disabled = true;
+
+    if(res.type === "win"){
+      creditPrize(phone, res.amount);        // заглушка нарахування — лише при виграші
+      amountEl.textContent = res.amount + " грн";
+      amountEl.classList.add("show");
+      msgEl.innerHTML = '<span class="credit-note">Приз буде нараховано на номер ' +
+        displayPhone(phone) + '</span>';
+      launchConfetti();
+    } else {
+      msgEl.innerHTML = '<div class="lose-text">Пощастить наступного разу!</div>' +
+        '<div style="margin-top:6px;opacity:.9">Дякуємо за участь.</div>';
+    }
+  }
+
+  // ---------- confetti ----------
+  function launchConfetti(){
+    if(window.matchMedia && window.matchMedia("(prefers-reduced-motion:reduce)").matches) return;
+    var box = document.getElementById("confetti");
+    var colors = ["#D9A93F","#F0CC7A","#FBF3E4","#fff","#bb8a2c"];
+    for(var i=0;i<140;i++){
+      (function(){
+        var c = document.createElement("div");
+        c.className = "conf";
+        var left = Math.random()*100;
+        c.style.left = left + "vw";
+        c.style.background = colors[Math.floor(Math.random()*colors.length)];
+        c.style.transform = "rotate("+(Math.random()*360)+"deg)";
+        if(Math.random()<0.5) c.style.borderRadius = "50%";
+        box.appendChild(c);
+        var dur = 2200 + Math.random()*2200;
+        var xEnd = (Math.random()*2-1)*120;
+        var anim = c.animate([
+          {transform:"translate(0,0) rotate(0deg)", opacity:1},
+          {transform:"translate("+xEnd+"px,"+(window.innerHeight+60)+"px) rotate("+(Math.random()*720)+"deg)", opacity:.9}
+        ], {duration:dur, easing:"cubic-bezier(.2,.6,.4,1)"});
+        anim.onfinish = function(){ c.remove(); };
+      })();
+    }
+  }
+
+})();
+</script>
+</body>
+</html>
