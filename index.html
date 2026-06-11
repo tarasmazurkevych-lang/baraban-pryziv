@@ -6,21 +6,21 @@
 <title>Барабан призів · Тестова сторінка</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Manrope:wght@400;500;600;700&display=swap&subset=cyrillic,cyrillic-ext,latin" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Manrope:wght@400;500;600;700&display=swap&subset=cyrillic,cyrillic-ext,latin" rel="stylesheet">
 <style>
   :root{
-    /* Фірмові кольори "Родинна ковбаска" (ТМ Barkom) */
-    --rk-red:#C8102E; --rk-red-d:#9E0B22; --rk-red-dd:#7d0a1b;
-    --bordo-3:#54101a;
-    --gold:#D9A93F; --gold-soft:#F0CC7A; --cream:#FBF3E4; --cream-2:#F4E7CE;
-    --ink:#3a0d12;
+    /* Фірмові кольори "Родинна ковбаска" (ТМ Barkom) — світлий стиль, зелений акцент */
+    --green:#83C341; --green-d:#46AB54; --green-dd:#2F7D3A; --green-soft:#A6D96A;
+    --ink:#212529; --muted:#515457;
+    --bg:#FFFFFF; --bg-tint:#F1F8E9; --panel:#FFFFFF; --line:#E6EFE0;
+    --cream:#F7FBEF;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;min-height:100%}
   body{
     font-family:'Manrope',system-ui,sans-serif;
-    color:var(--cream);
-    background:radial-gradient(120% 120% at 50% 0%, var(--rk-red) 0%, var(--rk-red-d) 48%, var(--rk-red-dd) 100%);
+    color:var(--ink);
+    background:radial-gradient(120% 90% at 50% 0%, var(--bg-tint) 0%, #FFFFFF 52%);
     background-attachment:fixed;
     min-height:100vh;
     display:flex;flex-direction:column;align-items:center;
@@ -28,87 +28,86 @@
     text-align:center;
     overflow-x:hidden;
   }
-  .brand{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:4px}
-  .brand img{height:74px;width:auto;filter:drop-shadow(0 4px 10px rgba(0,0,0,.3));
-    background:var(--cream);padding:10px 16px;border-radius:16px}
-  .brand .slogan{font-family:'Unbounded',sans-serif;font-weight:500;font-size:12px;
-    letter-spacing:.28em;text-transform:uppercase;color:var(--gold-soft)}
+  .brand{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:6px}
+  .brand img{height:78px;width:auto}
+  .brand .slogan{font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;
+    letter-spacing:.22em;text-transform:uppercase;color:var(--green-d)}
   .demo-badge{
-    font-family:'Manrope',sans-serif;font-weight:700;font-size:11px;letter-spacing:.18em;
-    color:var(--gold-soft);text-transform:uppercase;opacity:.85;
-    border:1px solid rgba(217,169,63,.4);border-radius:999px;padding:6px 14px;margin-top:6px;
+    font-family:'Manrope',sans-serif;font-weight:700;font-size:11px;letter-spacing:.16em;
+    color:var(--green-d);text-transform:uppercase;
+    border:1px solid var(--green);border-radius:999px;padding:6px 14px;margin-top:2px;
+    background:#fff;
   }
   h1{
-    font-family:'Unbounded',sans-serif;font-weight:800;
-    font-size:clamp(30px,8.5vw,46px);line-height:1.04;margin:14px 0 4px;
-    text-shadow:0 2px 0 rgba(0,0,0,.25);
+    font-family:'Nunito',sans-serif;font-weight:900;
+    font-size:clamp(30px,8.5vw,46px);line-height:1.04;margin:14px 0 4px;color:var(--ink);
   }
-  h1 .gold{color:var(--gold-soft)}
-  .phone-line{font-weight:600;font-size:clamp(15px,4.2vw,18px);color:#f5e7c7;opacity:.92;margin-bottom:14px;letter-spacing:.02em}
+  h1 .green{color:var(--green-d)}
+  .phone-line{font-weight:600;font-size:clamp(15px,4.2vw,18px);color:var(--muted);margin-bottom:14px;letter-spacing:.01em}
 
   /* ---- WHEEL ---- */
   .stage{position:relative;width:min(86vw,420px);aspect-ratio:1/1;margin:6px auto 8px}
   .pointer{
     position:absolute;top:-6px;left:50%;transform:translateX(-50%);z-index:6;
     width:0;height:0;border-left:18px solid transparent;border-right:18px solid transparent;
-    border-top:30px solid var(--gold);
-    filter:drop-shadow(0 3px 3px rgba(0,0,0,.4));
+    border-top:30px solid var(--green-d);
+    filter:drop-shadow(0 3px 3px rgba(0,0,0,.2));
   }
-  .pointer::after{content:"";position:absolute;top:-30px;left:-6px;width:12px;height:12px;border-radius:50%;background:var(--gold-soft)}
+  .pointer::after{content:"";position:absolute;top:-30px;left:-6px;width:12px;height:12px;border-radius:50%;background:var(--green-soft)}
   .rim{
     position:absolute;inset:0;border-radius:50%;
     background:
-      radial-gradient(circle at 50% 35%, var(--gold-soft), var(--gold) 55%, #a87a25 100%);
-    box-shadow:0 14px 40px rgba(0,0,0,.45), inset 0 0 0 3px rgba(255,255,255,.15);
+      radial-gradient(circle at 50% 35%, var(--green-soft), var(--green) 55%, var(--green-d) 100%);
+    box-shadow:0 14px 36px rgba(70,171,84,.28), inset 0 0 0 3px rgba(255,255,255,.35);
     padding:18px;
   }
   .lamps{position:absolute;inset:0;z-index:4;pointer-events:none}
   .lamp{position:absolute;width:11px;height:11px;border-radius:50%;
-    background:radial-gradient(circle at 35% 35%,#fff,var(--gold-soft) 55%,#9a6e1f);
-    margin:-5.5px;box-shadow:0 0 6px rgba(240,204,122,.7);
+    background:radial-gradient(circle at 35% 35%,#fff,#eafbe0 55%,#bfe89a);
+    margin:-5.5px;box-shadow:0 0 6px rgba(255,255,255,.9);
     animation:blink 1.6s infinite}
-  @keyframes blink{0%,100%{opacity:.35;transform:scale(.8)}50%{opacity:1;transform:scale(1.15);box-shadow:0 0 12px 2px rgba(240,204,122,.95)}}
-  .wheel-wrap{position:absolute;inset:18px;border-radius:50%;overflow:hidden;background:var(--bordo-3);
-    box-shadow:inset 0 0 0 4px var(--gold), inset 0 0 30px rgba(0,0,0,.55)}
+  @keyframes blink{0%,100%{opacity:.45;transform:scale(.8)}50%{opacity:1;transform:scale(1.15);box-shadow:0 0 12px 2px rgba(255,255,255,.95)}}
+  .wheel-wrap{position:absolute;inset:18px;border-radius:50%;overflow:hidden;background:#fff;
+    box-shadow:inset 0 0 0 4px var(--green), inset 0 0 26px rgba(70,171,84,.18)}
   #wheel{width:100%;height:100%;display:block;
     transition:transform 5.5s cubic-bezier(.12,.65,.07,1)}
   .hub{
     position:absolute;top:50%;left:50%;width:24%;height:24%;transform:translate(-50%,-50%);
     border-radius:50%;z-index:5;
-    background:radial-gradient(circle at 38% 35%,var(--gold-soft),var(--gold) 60%,#a87a25 100%);
-    box-shadow:0 4px 12px rgba(0,0,0,.4), inset 0 0 0 3px rgba(255,255,255,.25);
+    background:radial-gradient(circle at 38% 35%,var(--green-soft),var(--green) 60%,var(--green-d) 100%);
+    box-shadow:0 4px 12px rgba(47,125,58,.35), inset 0 0 0 3px rgba(255,255,255,.45);
     display:flex;align-items:center;justify-content:center;
   }
-  .hub span{font-family:'Unbounded',sans-serif;font-weight:700;color:var(--bordo-3);
+  .hub span{font-family:'Nunito',sans-serif;font-weight:800;color:#fff;
     font-size:clamp(11px,3.2vw,15px);letter-spacing:.04em}
 
   /* ---- BUTTON ---- */
   .btn{
-    font-family:'Unbounded',sans-serif;font-weight:700;font-size:clamp(16px,4.6vw,20px);
-    color:var(--bordo-3);border:none;cursor:pointer;
+    font-family:'Nunito',sans-serif;font-weight:800;font-size:clamp(16px,4.6vw,20px);
+    color:#fff;border:none;cursor:pointer;
     padding:16px 40px;border-radius:999px;margin-top:10px;
-    background:linear-gradient(180deg,var(--gold-soft),var(--gold) 70%,#bb8a2c);
-    box-shadow:0 8px 0 #8a6420, 0 12px 22px rgba(0,0,0,.4);
+    background:linear-gradient(180deg,var(--green-soft),var(--green) 55%,var(--green-d));
+    box-shadow:0 8px 0 var(--green-dd), 0 12px 22px rgba(70,171,84,.32);
     transition:transform .08s ease, box-shadow .08s ease;
-    letter-spacing:.02em;
+    letter-spacing:.01em;
   }
-  .btn:active:not(:disabled){transform:translateY(6px);box-shadow:0 2px 0 #8a6420,0 6px 12px rgba(0,0,0,.4)}
-  .btn:disabled{filter:grayscale(.55) brightness(.85);cursor:not-allowed;box-shadow:0 6px 0 #6d5018}
+  .btn:active:not(:disabled){transform:translateY(6px);box-shadow:0 2px 0 var(--green-dd),0 6px 12px rgba(70,171,84,.3)}
+  .btn:disabled{filter:grayscale(.5) brightness(.96);cursor:not-allowed;box-shadow:0 6px 0 #9bb589}
 
   /* ---- RESULT / MESSAGES ---- */
-  .msg{max-width:440px;margin:18px auto 0;font-size:16px;line-height:1.5;min-height:24px}
-  .result-amount{font-family:'Unbounded',sans-serif;font-weight:800;font-size:clamp(40px,12vw,68px);
-    color:var(--gold-soft);text-shadow:0 3px 0 rgba(0,0,0,.3);margin:6px 0;display:none}
+  .msg{max-width:440px;margin:18px auto 0;font-size:16px;line-height:1.5;min-height:24px;color:var(--ink)}
+  .result-amount{font-family:'Nunito',sans-serif;font-weight:900;font-size:clamp(40px,12vw,68px);
+    color:var(--green-d);margin:6px 0;display:none}
   .result-amount.show{display:block;animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
   @keyframes pop{0%{transform:scale(.3);opacity:0}100%{transform:scale(1);opacity:1}}
-  .credit-note{font-weight:600;color:#f5e7c7}
-  .lose-text{font-family:'Unbounded',sans-serif;font-weight:600;font-size:clamp(20px,6vw,30px);color:var(--gold-soft)}
+  .credit-note{font-weight:600;color:var(--muted)}
+  .lose-text{font-family:'Nunito',sans-serif;font-weight:800;font-size:clamp(20px,6vw,30px);color:var(--green-d)}
 
   /* error / no-number block */
-  .notice{max-width:460px;background:rgba(0,0,0,.22);border:1px solid rgba(217,169,63,.35);
-    border-radius:18px;padding:22px 20px;margin-top:30px}
-  .notice h2{font-family:'Unbounded',sans-serif;font-size:22px;color:var(--gold-soft);margin:0 0 10px}
-  .notice code{display:inline-block;background:rgba(0,0,0,.35);color:#f5e7c7;padding:6px 10px;border-radius:8px;
+  .notice{max-width:460px;background:var(--panel);border:1px solid var(--line);
+    border-radius:18px;padding:22px 20px;margin-top:30px;box-shadow:0 10px 30px rgba(33,37,41,.06)}
+  .notice h2{font-family:'Nunito',sans-serif;font-weight:800;font-size:22px;color:var(--green-d);margin:0 0 10px}
+  .notice code{display:inline-block;background:var(--bg-tint);color:var(--green-dd);padding:6px 10px;border-radius:8px;
     font-size:13px;margin-top:8px;word-break:break-all}
 
   .hidden{display:none!important}
@@ -131,7 +130,7 @@
          onerror="this.style.display='none'">
     <div class="slogan">Своє. Свіже.</div>
   </div>
-  <h1>Барабан <span class="gold">призів</span></h1>
+  <h1>Барабан <span class="green">призів</span></h1>
   <div class="phone-line" id="phoneLine"></div>
 
   <!-- main game -->
@@ -266,8 +265,8 @@
     var path = document.createElementNS(SVGNS,"path");
     path.setAttribute("d", "M"+cx+" "+cy+" L"+p0[0].toFixed(2)+" "+p0[1].toFixed(2)+
       " A"+R+" "+R+" 0 0 1 "+p1[0].toFixed(2)+" "+p1[1].toFixed(2)+" Z");
-    path.setAttribute("fill", s.type==="win" ? "#FBF3E4" : "#54101a");
-    path.setAttribute("stroke", "#D9A93F");
+    path.setAttribute("fill", s.type==="win" ? "#FFFFFF" : "#83C341");
+    path.setAttribute("stroke", "#83C341");
     path.setAttribute("stroke-width","2");
     svg.appendChild(path);
 
@@ -276,9 +275,9 @@
     if(s.type==="win"){
       var t = document.createElementNS(SVGNS,"text");
       t.setAttribute("x", lp[0].toFixed(1)); t.setAttribute("y", lp[1].toFixed(1));
-      t.setAttribute("fill","#7A1622");
-      t.setAttribute("font-family","Unbounded, sans-serif");
-      t.setAttribute("font-weight","700");
+      t.setAttribute("fill","#2F7D3A");
+      t.setAttribute("font-family","Nunito, sans-serif");
+      t.setAttribute("font-weight","800");
       t.setAttribute("font-size","19");
       t.setAttribute("text-anchor","middle");
       t.setAttribute("dominant-baseline","central");
@@ -288,7 +287,7 @@
       var u = document.createElementNS(SVGNS,"text");
       var up = pt(mid, R*0.82);
       u.setAttribute("x", up[0].toFixed(1)); u.setAttribute("y", up[1].toFixed(1));
-      u.setAttribute("fill","#9a7a2a");
+      u.setAttribute("fill","#7BB23F");
       u.setAttribute("font-family","Manrope, sans-serif");
       u.setAttribute("font-weight","700");
       u.setAttribute("font-size","11");
@@ -300,7 +299,7 @@
     } else {
       var star = document.createElementNS(SVGNS,"text");
       star.setAttribute("x", lp[0].toFixed(1)); star.setAttribute("y", lp[1].toFixed(1));
-      star.setAttribute("fill","#D9A93F");
+      star.setAttribute("fill","#FFFFFF");
       star.setAttribute("font-size","26");
       star.setAttribute("text-anchor","middle");
       star.setAttribute("dominant-baseline","central");
@@ -421,7 +420,7 @@
       launchConfetti();
     } else {
       msgEl.innerHTML = '<div class="lose-text">Пощастить наступного разу!</div>' +
-        '<div style="margin-top:6px;opacity:.9">Дякуємо за участь.</div>';
+        '<div style="margin-top:6px;color:var(--muted)">Дякуємо за участь.</div>';
     }
   }
 
@@ -429,7 +428,7 @@
   function launchConfetti(){
     if(window.matchMedia && window.matchMedia("(prefers-reduced-motion:reduce)").matches) return;
     var box = document.getElementById("confetti");
-    var colors = ["#D9A93F","#F0CC7A","#FBF3E4","#fff","#bb8a2c"];
+    var colors = ["#83C341","#46AB54","#A6D96A","#FFFFFF","#2F7D3A"];
     for(var i=0;i<140;i++){
       (function(){
         var c = document.createElement("div");
