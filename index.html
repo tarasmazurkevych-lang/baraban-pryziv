@@ -249,7 +249,11 @@
     if(e >= 2 && e <= 4) return "бали";
     return "балів";
   }
-  function balanceStr(n){ return n + " " + ballsWord(n); }
+  function balanceStr(n){
+    var txt = String(n).replace(".", ",");                 // 160.5 -> 160,5
+    return (n % 1 === 0) ? (txt + " " + ballsWord(n))      // ціле: бал/бали/балів
+                         : (txt + " бала");                // дробове: «160,5 бала»
+  }
   function showBalanceLine(bal, prefix){
     if(bal === undefined || bal === null) return;
     var el = document.getElementById("balanceLine");
