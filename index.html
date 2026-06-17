@@ -44,6 +44,8 @@
   }
   h1 .green{color:var(--green-d)}
   .phone-line{font-weight:600;font-size:clamp(15px,4.2vw,18px);color:var(--muted);margin-bottom:14px;letter-spacing:.01em}
+  .loader{margin-top:30px;color:var(--muted);font-weight:600;font-size:16px}
+  .loader .dot{display:inline-block;animation:blink 1.2s infinite}
 
   /* ---- WHEEL ---- */
   .stage{position:relative;width:min(86vw,420px);aspect-ratio:1/1;margin:6px auto 8px}
@@ -133,6 +135,8 @@
   <h1>Барабан <span class="green">призів</span></h1>
   <div class="phone-line" id="phoneLine"></div>
 
+  <div id="loader" class="loader hidden">Перевіряємо ваш номер<span class="dot">…</span></div>
+
   <!-- main game -->
   <div id="game" class="hidden">
     <div class="stage">
@@ -149,7 +153,7 @@
     <div class="msg" id="msg"></div>
   </div>
 
-  <!-- no-number / used notice -->
+  <!-- notice (no number / used / errors) -->
   <div id="notice" class="notice hidden">
     <h2 id="noticeTitle"></h2>
     <div id="noticeBody"></div>
@@ -161,75 +165,15 @@
 (function(){
   "use strict";
 
-  // ---------- 1. PHONE FROM URL ----------
-  // Номер передається у посиланні після "?". Беремо лише цифри,
-  // тож працюють формати: ?380630401041 , ?t=380... , ?+38(063)...
-  var rawQuery = decodeURIComponent(location.search.replace(/^\?/, ""));
-  var digits = rawQuery.replace(/\D/g, "");
+  // =========================================================================
+  //  КОНФІГУРАЦІЯ
+  //  Встав сюди URL веб-додатка Google Apps Script (…/exec).
+  //  Поки порожньо ('') — сторінка працює в ДЕМО-режимі (без бекенду й нарахувань).
+  // =========================================================================
+  var API = 'https://script.google.com/macros/s/AKfycbxy0-6gkcglXT6KK9lRAj1j0j0csZvmhwrvtX-NolCsoCxmA6xtVxyVpJWc58AzCOnO1A/exec';
+  var PERIOD = 7; // днів (для тексту повідомлення)
 
-  // нормалізація до національного формату 0XXXXXXXXX (10 цифр)
-  function normalize(d){
-    if(!d) return null;
-    if(d.length >= 12 && d.indexOf("380") === 0) d = d.slice(2);      // 380XXXXXXXXX -> 0XXXXXXXXX
-    else if(d.length === 11 && d.indexOf("80") === 0) d = "0" + d.slice(2);
-    else if(d.length === 9) d = "0" + d;                              // XXXXXXXXX -> 0XXXXXXXXX
-    // якщо вже 0XXXXXXXXX (10) — лишаємо як є
-    if(d.length > 10) d = d.slice(-10);
-    return d;
-  }
-  function displayPhone(nat){
-    // 0XX XXX XX XX -> +38 0XX XXX XX XX
-    var m = nat.match(/^(0\d{2})(\d{3})(\d{2})(\d{2})$/);
-    if(!m) return "+38 " + nat;
-    return "+38 " + m[1] + " " + m[2] + " " + m[3] + " " + m[4];
-  }
-
-  var gameEl = document.getElementById("game");
-  var noticeEl = document.getElementById("notice");
-  var noticeTitle = document.getElementById("noticeTitle");
-  var noticeBody = document.getElementById("noticeBody");
-  var phoneLineEl = document.getElementById("phoneLine");
-
-  function showNotice(title, htmlBody){
-    gameEl.classList.add("hidden");
-    noticeEl.classList.remove("hidden");
-    noticeTitle.textContent = title;
-    noticeBody.innerHTML = htmlBody;
-  }
-
-  if(digits.length < 9){
-    showNotice("Номер не передано",
-      "Щоб взяти участь, відкрийте посилання з вашим номером телефону після знака «?».<br>" +
-      "Приклад правильного посилання:<br><code>" + location.origin + location.pathname + "?380630401041</code>");
-    return;
-  }
-
-  var phone = normalize(digits);
-  var phoneFull = "+38" + (phone ? phone.slice(1) : "");
-  phoneLineEl.textContent = "Учасник: " + displayPhone(phone);
-
-  // ---------- 2. REPEAT PARTICIPATION CHECK ----------
-  var STORE_KEY = "baraban_used_numbers";
-  function getUsed(){
-    try { return JSON.parse(localStorage.getItem(STORE_KEY) || "[]"); }
-    catch(e){ return []; }
-  }
-  function markUsed(n){
-    var arr = getUsed();
-    if(arr.indexOf(n) === -1){ arr.push(n); localStorage.setItem(STORE_KEY, JSON.stringify(arr)); }
-  }
-
-  if(getUsed().indexOf(phone) !== -1){
-    showNotice("Цей номер уже брав участь",
-      "Один номер — одна спроба.<br>Номер <b>" + displayPhone(phone) + "</b> вже використав свою спробу в барабані.");
-    return;
-  }
-
-  // все добре — показуємо гру
-  gameEl.classList.remove("hidden");
-
-  // ---------- 3. WHEEL CONFIG ----------
-  // 15 секторів: 10 грошових + 5 "наступного разу", чергуються
+  // Сектори колеса — МАЮТЬ збігатися з масивом SECTORS у baraban-apps-script.gs
   var SECTORS = [
     {type:"win",  amount:10},
     {type:"lose"},
@@ -247,207 +191,256 @@
     {type:"lose"},
     {type:"win",  amount:500}
   ];
-  var N = SECTORS.length;          // 15
-  var SEG = 360 / N;               // 24°
+  var N = SECTORS.length, SEG = 360 / N;
 
-  // ---------- build SVG wheel ----------
-  var svg = document.getElementById("wheel");
-  var SVGNS = "http://www.w3.org/2000/svg";
-  var cx = 200, cy = 200, R = 200;
-  // clock-angle (clockwise from top) -> point
-  function pt(angDeg, r){
-    var a = (angDeg) * Math.PI/180;
-    return [cx + r*Math.sin(a), cy - r*Math.cos(a)];
+  // ---------- елементи ----------
+  var gameEl    = document.getElementById("game");
+  var noticeEl  = document.getElementById("notice");
+  var noticeTit = document.getElementById("noticeTitle");
+  var noticeBody= document.getElementById("noticeBody");
+  var phoneLine = document.getElementById("phoneLine");
+  var loaderEl  = document.getElementById("loader");
+  var btn       = document.getElementById("spinBtn");
+  var amountEl  = document.getElementById("amount");
+  var msgEl     = document.getElementById("msg");
+  var svg       = document.getElementById("wheel");
+
+  function showNotice(t, html){
+    gameEl.classList.add("hidden"); loaderEl.classList.add("hidden");
+    noticeEl.classList.remove("hidden");
+    noticeTit.textContent = t; noticeBody.innerHTML = html;
   }
-  SECTORS.forEach(function(s, i){
-    var a0 = i*SEG, a1 = (i+1)*SEG, mid = a0 + SEG/2;
-    var p0 = pt(a0, R), p1 = pt(a1, R);
-    var path = document.createElementNS(SVGNS,"path");
-    path.setAttribute("d", "M"+cx+" "+cy+" L"+p0[0].toFixed(2)+" "+p0[1].toFixed(2)+
-      " A"+R+" "+R+" 0 0 1 "+p1[0].toFixed(2)+" "+p1[1].toFixed(2)+" Z");
-    path.setAttribute("fill", s.type==="win" ? "#FFFFFF" : "#83C341");
-    path.setAttribute("stroke", "#83C341");
-    path.setAttribute("stroke-width","2");
-    svg.appendChild(path);
+  function showGame(){ noticeEl.classList.add("hidden"); loaderEl.classList.add("hidden"); gameEl.classList.remove("hidden"); }
+  function showLoader(){ noticeEl.classList.add("hidden"); gameEl.classList.add("hidden"); loaderEl.classList.remove("hidden"); }
 
-    // label
-    var lp = pt(mid, R*0.64);
-    if(s.type==="win"){
-      var t = document.createElementNS(SVGNS,"text");
-      t.setAttribute("x", lp[0].toFixed(1)); t.setAttribute("y", lp[1].toFixed(1));
-      t.setAttribute("fill","#2F7D3A");
-      t.setAttribute("font-family","Nunito, sans-serif");
-      t.setAttribute("font-weight","800");
-      t.setAttribute("font-size","19");
-      t.setAttribute("text-anchor","middle");
-      t.setAttribute("dominant-baseline","central");
-      t.setAttribute("transform","rotate("+mid.toFixed(2)+" "+lp[0].toFixed(1)+" "+lp[1].toFixed(1)+")");
-      t.textContent = s.amount;
-      svg.appendChild(t);
-      var u = document.createElementNS(SVGNS,"text");
-      var up = pt(mid, R*0.82);
-      u.setAttribute("x", up[0].toFixed(1)); u.setAttribute("y", up[1].toFixed(1));
-      u.setAttribute("fill","#7BB23F");
-      u.setAttribute("font-family","Manrope, sans-serif");
-      u.setAttribute("font-weight","700");
-      u.setAttribute("font-size","11");
-      u.setAttribute("text-anchor","middle");
-      u.setAttribute("dominant-baseline","central");
-      u.setAttribute("transform","rotate("+mid.toFixed(2)+" "+up[0].toFixed(1)+" "+up[1].toFixed(1)+")");
-      u.textContent = "грн";
-      svg.appendChild(u);
-    } else {
-      var star = document.createElementNS(SVGNS,"text");
-      star.setAttribute("x", lp[0].toFixed(1)); star.setAttribute("y", lp[1].toFixed(1));
-      star.setAttribute("fill","#FFFFFF");
-      star.setAttribute("font-size","26");
-      star.setAttribute("text-anchor","middle");
-      star.setAttribute("dominant-baseline","central");
-      star.setAttribute("transform","rotate("+mid.toFixed(2)+" "+lp[0].toFixed(1)+" "+lp[1].toFixed(1)+")");
-      star.textContent = "★";
-      svg.appendChild(star);
-    }
-  });
-
-  // ---------- lamps ----------
-  var lampsEl = document.getElementById("lamps");
-  var LAMPS = 16;
-  for(var k=0;k<LAMPS;k++){
-    var ang = (k/LAMPS)*2*Math.PI;
-    var lr = 50; // % radius along rim
-    var lamp = document.createElement("div");
-    lamp.className = "lamp";
-    lamp.style.left = (50 + lr*Math.sin(ang)).toFixed(2) + "%";
-    lamp.style.top  = (50 - lr*Math.cos(ang)).toFixed(2) + "%";
-    lamp.style.animationDelay = (k*0.1).toFixed(2) + "s";
-    lampsEl.appendChild(lamp);
+  // ---------- телефон з URL ----------
+  var rawQuery = decodeURIComponent(location.search.replace(/^\?/, ""));
+  var digits = rawQuery.replace(/\D/g, "");
+  function normalize(d){
+    if(!d) return null;
+    if(d.length >= 12 && d.indexOf("380") === 0) d = d.slice(2);
+    else if(d.length === 11 && d.indexOf("80") === 0) d = "0" + d.slice(2);
+    else if(d.length === 9) d = "0" + d;
+    if(d.length > 10) d = d.slice(-10);
+    return d;
+  }
+  function displayPhone(nat){
+    var m = nat && nat.match(/^(0\d{2})(\d{3})(\d{2})(\d{2})$/);
+    if(!m) return "+38 " + (nat||"");
+    return "+38 " + m[1] + " " + m[2] + " " + m[3] + " " + m[4];
   }
 
-  // ---------- 4. RESULT BY WEIGHTS (before spin) ----------
-  function pickResult(){
-    // 30% програш, 70% виграш
-    if(Math.random()*100 < 30){
-      return {type:"lose"};
-    }
-    // ваги всередині виграшів (сума = 100)
-    var winWeights = [
-      {amount:10,  w:20},
-      {amount:20,  w:17},
-      {amount:50,  w:15},
-      {amount:100, w:13},
-      {amount:150, w:11},
-      {amount:200, w:9},
-      {amount:250, w:7},
-      {amount:300, w:4},
-      {amount:400, w:2.5},
-      {amount:500, w:1.5}
-    ];
-    var total = winWeights.reduce(function(a,b){return a+b.w;},0);
-    var r = Math.random()*total, acc = 0;
-    for(var i=0;i<winWeights.length;i++){
-      acc += winWeights[i].w;
-      if(r <= acc) return {type:"win", amount:winWeights[i].amount};
-    }
-    return {type:"win", amount:winWeights[0].amount};
+  if(digits.length < 9){
+    showNotice("Номер не передано",
+      "Щоб взяти участь, відкрийте посилання з вашим номером телефону після знака «?».<br>" +
+      "Приклад правильного посилання:<br><code>" + location.origin + location.pathname + "?380630401041</code>");
+    return;
+  }
+  var phone = normalize(digits);
+  phoneLine.textContent = "Учасник: " + displayPhone(phone);
+
+  // ---------- малюємо колесо (спільне для обох режимів) ----------
+  buildWheel();
+
+  // ---------- старт: реальний бекенд або демо ----------
+  if(API){ startReal(); } else { startDemo(); }
+
+  // =========================================================================
+  //  РЕАЛЬНИЙ РЕЖИМ (Google Apps Script + таблиця)
+  // =========================================================================
+  function jsonp(params){
+    return new Promise(function(resolve, reject){
+      var cb = "cb_" + Math.random().toString(36).slice(2);
+      var s = document.createElement("script");
+      var done = false;
+      window[cb] = function(data){ done = true; cleanup(); resolve(data); };
+      function cleanup(){ try{ delete window[cb]; }catch(e){ window[cb]=undefined; } if(s.parentNode) s.parentNode.removeChild(s); clearTimeout(timer); }
+      var timer = setTimeout(function(){ if(!done){ cleanup(); reject(new Error("timeout")); } }, 15000);
+      s.onerror = function(){ if(!done){ cleanup(); reject(new Error("network")); } };
+      s.src = API + (API.indexOf("?")>=0?"&":"?") + params + "&callback=" + cb;
+      document.body.appendChild(s);
+    });
   }
 
-  // знайти індекс сектора під результат
+  function startReal(){
+    showLoader();
+    jsonp("action=check&phone=" + encodeURIComponent(digits))
+      .then(handleState)
+      .catch(function(){ showNotice("Сервіс тимчасово недоступний", "Спробуйте, будь ласка, оновити сторінку трохи пізніше."); });
+  }
+
+  function handleState(r){
+    if(!r){ return showNotice("Помилка", "Не вдалося отримати відповідь сервера."); }
+    if(r.status === "ready"){ showGame(); bindRealSpin(); return; }
+    if(r.status === "used")  return noticeUsed();
+    if(r.status === "no_number") return noticeNoNumber();
+    if(r.status === "bad_phone") return showNotice("Номер не передано","Перевірте посилання — у ньому має бути ваш номер після «?».");
+    return showNotice("Помилка", "Сервіс повернув несподівану відповідь. Спробуйте пізніше.");
+  }
+
+  function bindRealSpin(){
+    var spinning = false;
+    btn.addEventListener("click", function(){
+      if(spinning) return; spinning = true; btn.disabled = true;
+      var prevText = btn.textContent; btn.textContent = "Крутимо…";
+      jsonp("action=spin&phone=" + encodeURIComponent(digits))
+        .then(function(r){
+          if(r.status === "used"){ return noticeUsed(); }
+          if(r.status === "no_number"){ return noticeNoNumber(); }
+          if(r.status !== "win" && r.status !== "lose"){
+            spinning = false; btn.disabled = false; btn.textContent = prevText;
+            msgEl.textContent = "Не вдалося прокрутити. Спробуйте ще раз.";
+            return;
+          }
+          animateTo(r.sectorIndex, function(){
+            btn.textContent = "Спробу використано";
+            if(r.status === "win"){
+              amountEl.textContent = r.amount + " грн";
+              amountEl.classList.add("show");
+              var note = r.credited === false
+                ? "Приз " + r.amount + " грн зараховуємо на номер " + displayPhone(phone) + " (обробляється)."
+                : "Приз " + r.amount + " грн нараховано на номер " + displayPhone(phone) + " — діє " + PERIOD + " днів.";
+              msgEl.innerHTML = '<span class="credit-note">' + note + '</span>';
+              launchConfetti();
+            } else {
+              msgEl.innerHTML = '<div class="lose-text">Пощастить наступного разу!</div>' +
+                '<div style="margin-top:6px;color:var(--muted)">Дякуємо за участь.</div>';
+            }
+          });
+        })
+        .catch(function(){
+          spinning = false; btn.disabled = false; btn.textContent = prevText;
+          msgEl.textContent = "Зʼєднання перервалося. Спробуйте ще раз.";
+        });
+    });
+  }
+
+  function noticeUsed(){
+    showNotice("Цей номер уже брав участь",
+      "Один номер — одна спроба.<br>Номер <b>" + displayPhone(phone) + "</b> вже використав свою спробу в барабані.");
+  }
+  function noticeNoNumber(){
+    showNotice("Номер не зареєстрований",
+      "Номер <b>" + displayPhone(phone) + "</b> не знайдено в системі лояльності «Родинна ковбаска».<br>" +
+      "Зареєструйтеся в програмі лояльності та спробуйте ще раз.");
+  }
+
+  // =========================================================================
+  //  ДЕМО-РЕЖИМ (без бекенду) — щоб лінк працював, поки API не підключено
+  // =========================================================================
+  function startDemo(){
+    var STORE_KEY = "baraban_used_numbers";
+    function getUsed(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY)||"[]"); }catch(e){ return []; } }
+    function markUsed(n){ var a=getUsed(); if(a.indexOf(n)===-1){ a.push(n); localStorage.setItem(STORE_KEY, JSON.stringify(a)); } }
+    if(getUsed().indexOf(phone) !== -1){ return noticeUsed(); }
+    showGame();
+    var spinning = false, currentRotation = 0;
+    btn.addEventListener("click", function(){
+      if(spinning) return; spinning = true; btn.disabled = true;
+      var res = pickResultLocal();
+      var idx = sectorIndexFor(res);
+      animateTo(idx, function(){
+        markUsed(phone);
+        btn.textContent = "Спробу використано";
+        if(res.type === "win"){
+          console.log("[DEMO creditPrize]", {phone:phone, amount:res.amount, period:PERIOD, time:new Date().toISOString()});
+          amountEl.textContent = res.amount + " грн"; amountEl.classList.add("show");
+          msgEl.innerHTML = '<span class="credit-note">Демо: приз ' + res.amount + ' грн нараховано на номер ' +
+            displayPhone(phone) + ' — діє ' + PERIOD + ' днів.</span>';
+          launchConfetti();
+        } else {
+          msgEl.innerHTML = '<div class="lose-text">Пощастить наступного разу!</div>' +
+            '<div style="margin-top:6px;color:var(--muted)">Дякуємо за участь.</div>';
+        }
+      });
+    });
+  }
+  function pickResultLocal(){
+    if(Math.random()*100 < 30) return {type:"lose"};
+    var w = [{amount:10,w:20},{amount:20,w:17},{amount:50,w:15},{amount:100,w:13},{amount:150,w:11},
+             {amount:200,w:9},{amount:250,w:7},{amount:300,w:4},{amount:400,w:2.5},{amount:500,w:1.5}];
+    var total=w.reduce(function(a,b){return a+b.w;},0), r=Math.random()*total, acc=0;
+    for(var i=0;i<w.length;i++){ acc+=w[i].w; if(r<=acc) return {type:"win",amount:w[i].amount}; }
+    return {type:"win",amount:w[0].amount};
+  }
+
+  // =========================================================================
+  //  СПІЛЬНЕ: колесо, обертання, конфеті
+  // =========================================================================
   function sectorIndexFor(res){
-    var candidates = [];
+    var c=[];
     SECTORS.forEach(function(s,i){
-      if(res.type==="lose" && s.type==="lose") candidates.push(i);
-      if(res.type==="win" && s.type==="win" && s.amount===res.amount) candidates.push(i);
+      if(res.type==="lose" && s.type==="lose") c.push(i);
+      if(res.type==="win" && s.type==="win" && s.amount===res.amount) c.push(i);
     });
-    return candidates[Math.floor(Math.random()*candidates.length)];
+    return c[Math.floor(Math.random()*c.length)];
   }
 
-  // ---------- 6. CREDIT STUB ----------
-  function creditPrize(phone, amount){
-    // TODO: тут у майбутньому буде реальний виклик API нарахування
-    // (наприклад, POST у CRM/лояльність з номером і сумою).
-    console.log("[creditPrize] нарахування призу", {
-      phone: phone,
-      amount: amount,
-      time: new Date().toISOString()
-    });
+  var _rotation = 0;
+  function animateTo(sectorIndex, onDone){
+    var centerAngle = sectorIndex*SEG + SEG/2;
+    var jitter = (Math.random()*2 - 1) * (SEG/2 - 3);
+    var spins = 5 + Math.floor(Math.random()*3);
+    _rotation += 360*spins - centerAngle - jitter;
+    svg.style.transform = "rotate(" + _rotation + "deg)";
+    var dur = 5500;
+    if(window.matchMedia && window.matchMedia("(prefers-reduced-motion:reduce)").matches) dur = 1200;
+    setTimeout(onDone, dur + 120);
   }
 
-  // ---------- 5. SPIN ----------
-  var wheel = svg;
-  var btn = document.getElementById("spinBtn");
-  var amountEl = document.getElementById("amount");
-  var msgEl = document.getElementById("msg");
-  var spinning = false;
-  var currentRotation = 0;
-
-  btn.addEventListener("click", function(){
-    if(spinning) return;
-    spinning = true;
-    btn.disabled = true;
-
-    var res = pickResult();                 // результат визначено ДО обертання
-    var idx = sectorIndexFor(res);
-    var centerAngle = idx*SEG + SEG/2;       // clock-angle центру сектора
-    var jitter = (Math.random()*2 - 1) * (SEG/2 - 3); // зміщення в межах сектора
-    var spins = 5 + Math.floor(Math.random()*3); // 5–7 повних обертів
-
-    // докрутити так, щоб центр сектора став під вказівником (угорі = 0)
-    var target = 360*spins - centerAngle - jitter;
-    currentRotation += target;
-    wheel.style.transform = "rotate(" + currentRotation + "deg)";
-
-    var DURATION = 5500;
-    if(window.matchMedia && window.matchMedia("(prefers-reduced-motion:reduce)").matches){
-      DURATION = 1200;
-    }
-
-    setTimeout(function(){
-      finish(res);
-    }, DURATION + 120);
-  });
-
-  function finish(res){
-    markUsed(phone);                         // номер записано як використаний
-    btn.textContent = "Спробу використано";
-    btn.disabled = true;
-
-    if(res.type === "win"){
-      creditPrize(phone, res.amount);        // заглушка нарахування — лише при виграші
-      amountEl.textContent = res.amount + " грн";
-      amountEl.classList.add("show");
-      msgEl.innerHTML = '<span class="credit-note">Приз буде нараховано на номер ' +
-        displayPhone(phone) + '</span>';
-      launchConfetti();
-    } else {
-      msgEl.innerHTML = '<div class="lose-text">Пощастить наступного разу!</div>' +
-        '<div style="margin-top:6px;color:var(--muted)">Дякуємо за участь.</div>';
+  function buildWheel(){
+    var SVGNS="http://www.w3.org/2000/svg", cx=200, cy=200, R=200;
+    function pt(a,r){ var x=a*Math.PI/180; return [cx+r*Math.sin(x), cy-r*Math.cos(x)]; }
+    SECTORS.forEach(function(s,i){
+      var a0=i*SEG, a1=(i+1)*SEG, mid=a0+SEG/2, p0=pt(a0,R), p1=pt(a1,R);
+      var path=document.createElementNS(SVGNS,"path");
+      path.setAttribute("d","M"+cx+" "+cy+" L"+p0[0].toFixed(2)+" "+p0[1].toFixed(2)+
+        " A"+R+" "+R+" 0 0 1 "+p1[0].toFixed(2)+" "+p1[1].toFixed(2)+" Z");
+      path.setAttribute("fill", s.type==="win" ? "#FFFFFF" : "#83C341");
+      path.setAttribute("stroke","#83C341"); path.setAttribute("stroke-width","2");
+      svg.appendChild(path);
+      var lp=pt(mid,R*0.64);
+      if(s.type==="win"){
+        addText(lp,mid,"#2F7D3A","Nunito, sans-serif","800","19",s.amount);
+        addText(pt(mid,R*0.82),mid,"#7BB23F","Manrope, sans-serif","700","11","грн");
+      } else {
+        addText(lp,mid,"#FFFFFF","sans-serif","700","26","★");
+      }
+      function addText(p,deg,fill,fam,wt,sz,txt){
+        var t=document.createElementNS(SVGNS,"text");
+        t.setAttribute("x",p[0].toFixed(1)); t.setAttribute("y",p[1].toFixed(1));
+        t.setAttribute("fill",fill); t.setAttribute("font-family",fam); t.setAttribute("font-weight",wt);
+        t.setAttribute("font-size",sz); t.setAttribute("text-anchor","middle"); t.setAttribute("dominant-baseline","central");
+        t.setAttribute("transform","rotate("+deg.toFixed(2)+" "+p[0].toFixed(1)+" "+p[1].toFixed(1)+")");
+        t.textContent=txt; svg.appendChild(t);
+      }
+    });
+    var lampsEl=document.getElementById("lamps");
+    for(var k=0;k<16;k++){
+      var ang=(k/16)*2*Math.PI, lamp=document.createElement("div"); lamp.className="lamp";
+      lamp.style.left=(50+50*Math.sin(ang)).toFixed(2)+"%";
+      lamp.style.top =(50-50*Math.cos(ang)).toFixed(2)+"%";
+      lamp.style.animationDelay=(k*0.1).toFixed(2)+"s";
+      lampsEl.appendChild(lamp);
     }
   }
 
-  // ---------- confetti ----------
   function launchConfetti(){
     if(window.matchMedia && window.matchMedia("(prefers-reduced-motion:reduce)").matches) return;
-    var box = document.getElementById("confetti");
-    var colors = ["#83C341","#46AB54","#A6D96A","#FFFFFF","#2F7D3A"];
-    for(var i=0;i<140;i++){
-      (function(){
-        var c = document.createElement("div");
-        c.className = "conf";
-        var left = Math.random()*100;
-        c.style.left = left + "vw";
-        c.style.background = colors[Math.floor(Math.random()*colors.length)];
-        c.style.transform = "rotate("+(Math.random()*360)+"deg)";
-        if(Math.random()<0.5) c.style.borderRadius = "50%";
-        box.appendChild(c);
-        var dur = 2200 + Math.random()*2200;
-        var xEnd = (Math.random()*2-1)*120;
-        var anim = c.animate([
-          {transform:"translate(0,0) rotate(0deg)", opacity:1},
-          {transform:"translate("+xEnd+"px,"+(window.innerHeight+60)+"px) rotate("+(Math.random()*720)+"deg)", opacity:.9}
-        ], {duration:dur, easing:"cubic-bezier(.2,.6,.4,1)"});
-        anim.onfinish = function(){ c.remove(); };
-      })();
-    }
+    var box=document.getElementById("confetti");
+    var colors=["#83C341","#46AB54","#A6D96A","#FFFFFF","#2F7D3A"];
+    for(var i=0;i<140;i++){ (function(){
+      var c=document.createElement("div"); c.className="conf";
+      c.style.left=(Math.random()*100)+"vw";
+      c.style.background=colors[Math.floor(Math.random()*colors.length)];
+      c.style.transform="rotate("+(Math.random()*360)+"deg)";
+      if(Math.random()<0.5) c.style.borderRadius="50%";
+      box.appendChild(c);
+      var dur=2200+Math.random()*2200, xEnd=(Math.random()*2-1)*120;
+      c.animate([{transform:"translate(0,0) rotate(0deg)",opacity:1},
+        {transform:"translate("+xEnd+"px,"+(window.innerHeight+60)+"px) rotate("+(Math.random()*720)+"deg)",opacity:.9}],
+        {duration:dur,easing:"cubic-bezier(.2,.6,.4,1)"}).onfinish=function(){ c.remove(); };
+    })(); }
   }
 
 })();
