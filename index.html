@@ -214,7 +214,10 @@
   function showLoader(){ noticeEl.classList.add("hidden"); gameEl.classList.add("hidden"); loaderEl.classList.remove("hidden"); }
 
   // ---------- телефон з URL ----------
-  var rawQuery = decodeURIComponent(location.search.replace(/^\?/, ""));
+  // беремо лише першу частину запиту (до &), щоб трекінг-параметри (&utm=… тощо)
+  // не домішували зайвих цифр у номер
+  var firstSeg = location.search.replace(/^\?/, "").split("&")[0];
+  var rawQuery = decodeURIComponent(firstSeg);
   var digits = rawQuery.replace(/\D/g, "");
   function normalize(d){
     if(!d) return null;
