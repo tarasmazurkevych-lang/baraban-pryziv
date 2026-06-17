@@ -102,7 +102,15 @@
     color:var(--green-d);margin:6px 0;display:none}
   .result-amount.show{display:block;animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
   @keyframes pop{0%{transform:scale(.3);opacity:0}100%{transform:scale(1);opacity:1}}
-  .credit-note{font-weight:600;color:var(--muted)}
+  .credit-note{font-weight:600;color:var(--ink)}
+  .win-info{display:flex;flex-direction:column;align-items:center;gap:9px;margin-top:4px}
+  .credit-sub{color:var(--muted);font-size:14px;line-height:1.45}
+  .tg-btn{display:inline-flex;align-items:center;gap:8px;margin-top:4px;text-decoration:none;
+    background:#229ED9;color:#fff;font-weight:800;font-family:'Nunito',sans-serif;font-size:15px;
+    padding:11px 22px;border-radius:999px;box-shadow:0 6px 16px rgba(34,158,217,.35);transition:transform .08s ease}
+  .tg-btn:active{transform:translateY(2px)}
+  .tg-btn::before{content:"";width:18px;height:18px;flex:none;
+    background:no-repeat center/contain url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M9.04 15.47 8.7 20.2c.5 0 .72-.21.98-.47l2.34-2.24 4.85 3.55c.89.49 1.53.23 1.77-.82l3.2-15.01c.31-1.43-.52-1.99-1.45-1.64L1.2 9.46c-1.4.54-1.38 1.32-.24 1.67l4.96 1.55 11.5-7.25c.54-.36 1.04-.16.63.2z"/></svg>')}
   .lose-text{font-family:'Nunito',sans-serif;font-weight:800;font-size:clamp(20px,6vw,30px);color:var(--green-d)}
 
   /* error / no-number block */
@@ -299,10 +307,7 @@
             if(r.status === "win"){
               amountEl.textContent = r.amount + " грн";
               amountEl.classList.add("show");
-              var note = r.credited === false
-                ? "Приз " + r.amount + " грн зараховуємо на номер " + displayPhone(phone) + " (обробляється)."
-                : "Приз " + r.amount + " грн нараховано на номер " + displayPhone(phone) + " — діє " + PERIOD + " днів.";
-              msgEl.innerHTML = '<span class="credit-note">' + note + '</span>';
+              msgEl.innerHTML = winMessageHTML(r.amount, r.credited, false);
               launchConfetti();
             } else {
               msgEl.innerHTML = '<div class="lose-text">Пощастить наступного разу!</div>' +
@@ -347,8 +352,7 @@
         if(res.type === "win"){
           console.log("[DEMO creditPrize]", {phone:phone, amount:res.amount, period:PERIOD, time:new Date().toISOString()});
           amountEl.textContent = res.amount + " грн"; amountEl.classList.add("show");
-          msgEl.innerHTML = '<span class="credit-note">Демо: приз ' + res.amount + ' грн нараховано на номер ' +
-            displayPhone(phone) + ' — діє ' + PERIOD + ' днів.</span>';
+          msgEl.innerHTML = winMessageHTML(res.amount, true, true);
           launchConfetti();
         } else {
           msgEl.innerHTML = '<div class="lose-text">Пощастить наступного разу!</div>' +
@@ -369,6 +373,19 @@
   // =========================================================================
   //  СПІЛЬНЕ: колесо, обертання, конфеті
   // =========================================================================
+  function winMessageHTML(amount, credited, demo){
+    var who = displayPhone(phone);
+    var line1 = (demo ? "Демо: приз " : "Приз ") + "<b>" + amount + " грн</b> " +
+      (credited === false ? "зараховуємо на номер " + who + " (обробляється)."
+                          : "нараховано на номер " + who + ".");
+    return '<div class="win-info">' +
+      '<div class="credit-note">' + line1 + '</div>' +
+      '<div class="credit-sub">Скористайтеся виграшем протягом <b>' + PERIOD + ' днів</b>.<br>' +
+      'Свій баланс можна перевірити в Telegram-боті:</div>' +
+      '<a class="tg-btn" href="https://t.me/RodynnaKovbaska_bot" target="_blank" rel="noopener">Перевірити баланс</a>' +
+      '</div>';
+  }
+
   function sectorIndexFor(res){
     var c=[];
     SECTORS.forEach(function(s,i){
