@@ -44,6 +44,7 @@
   }
   h1 .green{color:var(--green-d)}
   .phone-line{font-weight:600;font-size:clamp(15px,4.2vw,18px);color:var(--muted);margin-bottom:14px;letter-spacing:.01em}
+  .balance-line{font-weight:700;color:var(--green-dd);font-size:clamp(14px,3.8vw,16px);margin:-9px 0 14px}
   .loader{margin-top:30px;color:var(--muted);font-weight:600;font-size:16px}
   .loader .dot{display:inline-block;animation:blink 1.2s infinite}
 
@@ -142,6 +143,7 @@
   </div>
   <h1>Колесо <span class="green">фортуни</span></h1>
   <div class="phone-line" id="phoneLine"></div>
+  <div class="balance-line hidden" id="balanceLine"></div>
 
   <div id="loader" class="loader hidden">Перевіряємо ваш номер<span class="dot">…</span></div>
 
@@ -240,6 +242,20 @@
     if(!m) return "+38 " + (nat||"");
     return "+38 " + m[1] + " " + m[2] + " " + m[3] + " " + m[4];
   }
+  function ballsWord(n){
+    n = Math.abs(Math.round(n)); var d = n % 100, e = n % 10;
+    if(d > 10 && d < 20) return "балів";
+    if(e === 1) return "бал";
+    if(e >= 2 && e <= 4) return "бали";
+    return "балів";
+  }
+  function balanceStr(n){ return n + " " + ballsWord(n); }
+  function showBalanceLine(bal, prefix){
+    if(bal === undefined || bal === null) return;
+    var el = document.getElementById("balanceLine");
+    el.textContent = (prefix || "Ваш баланс: ") + balanceStr(bal);
+    el.classList.remove("hidden");
+  }
 
   if(digits.length < 9){
     showNotice("Номер не передано", "");
@@ -280,10 +296,10 @@
 
   function handleState(r){
     if(!r){ return showNotice("Помилка", "Не вдалося отримати відповідь сервера."); }
-    if(r.status === "ready"){ showGame(); bindRealSpin(); return; }
-    if(r.status === "used")  return noticeUsed();
+    if(r.status === "ready"){ showBalanceLine(r.balance, "Ваш баланс зараз: "); showGame(); bindRealSpin(); return; }
+    if(r.status === "used"){ showBalanceLine(r.balance, "Ваш баланс: "); return noticeUsed(); }
     if(r.status === "no_number") return noticeNoNumber();
-    if(r.status === "bad_phone") return showNotice("Номер не передано","Перевірте посилання — у ньому має бути ваш номер після «?».");
+    if(r.status === "bad_phone") return showNotice("Номер не передано","");
     return showNotice("Помилка", "Сервіс повернув несподівану відповідь. Спробуйте пізніше.");
   }
 
@@ -292,6 +308,7 @@
     btn.addEventListener("click", function(){
       if(spinning) return; spinning = true; btn.disabled = true;
       var prevText = btn.textContent; btn.textContent = "Крутимо…";
+      document.getElementById("balanceLine").classList.add("hidden"); // баланс покажемо в результаті
       startSpin();                                  // обертання стартує ОДРАЗУ
       jsonp("action=spin&phone=" + encodeURIComponent(digits))
         .then(function(r){
@@ -308,11 +325,13 @@
             if(r.status === "win"){
               amountEl.textContent = r.amount + " грн";
               amountEl.classList.add("show");
-              msgEl.innerHTML = winMessageHTML(r.amount, r.credited, false);
+              msgEl.innerHTML = winMessageHTML(r.amount, r.credited, false, r.balance);
               launchConfetti();
             } else {
+              var balLose = (r.balance === undefined || r.balance === null) ? "" :
+                '<div class="credit-note" style="color:var(--green-dd);margin-top:10px">Ваш загальний баланс: <b>' + balanceStr(r.balance) + '</b></div>';
               msgEl.innerHTML = '<div class="lose-text">Пощастить наступного разу!</div>' +
-                '<div style="margin-top:6px;color:var(--muted)">Дякуємо за участь.</div>';
+                '<div style="margin-top:6px;color:var(--muted)">Дякуємо за участь.</div>' + balLose;
             }
           });
         })
@@ -375,13 +394,16 @@
   // =========================================================================
   //  СПІЛЬНЕ: колесо, обертання, конфеті
   // =========================================================================
-  function winMessageHTML(amount, credited, demo){
+  function winMessageHTML(amount, credited, demo, balance){
     var who = displayPhone(phone);
     var line1 = (demo ? "Демо: приз " : "Приз ") + "<b>" + amount + " грн</b> " +
       (credited === false ? "зараховуємо на номер " + who + " (обробляється)."
                           : "нараховано на номер " + who + ".");
+    var balHtml = (balance === undefined || balance === null) ? "" :
+      '<div class="credit-note" style="color:var(--green-dd)">Ваш загальний баланс: <b>' + balanceStr(balance) + '</b></div>';
     return '<div class="win-info">' +
       '<div class="credit-note">' + line1 + '</div>' +
+      balHtml +
       '<div class="credit-sub">Скористайтеся виграшем протягом <b>' + PERIOD + ' днів</b>.<br>' +
       'Свій баланс можна перевірити в Telegram-боті:</div>' +
       '<a class="tg-btn" href="https://t.me/RodynnaKovbaska_bot" target="_blank" rel="noopener">Перевірити баланс</a>' +
