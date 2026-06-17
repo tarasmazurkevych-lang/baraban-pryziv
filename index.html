@@ -73,6 +73,7 @@
     box-shadow:inset 0 0 0 4px var(--green), inset 0 0 26px rgba(70,171,84,.18)}
   #wheel{width:100%;height:100%;display:block;
     transition:transform 5.5s cubic-bezier(.12,.65,.07,1)}
+  @keyframes spin360{to{transform:rotate(360deg)}}
   .hub{
     position:absolute;top:50%;left:50%;width:24%;height:24%;transform:translate(-50%,-50%);
     border-radius:50%;z-index:5;
@@ -241,9 +242,7 @@
   }
 
   if(digits.length < 9){
-    showNotice("Номер не передано",
-      "Щоб взяти участь, відкрийте посилання з вашим номером телефону після знака «?».<br>" +
-      "Приклад правильного посилання:<br><code>" + location.origin + location.pathname + "?380630401041</code>");
+    showNotice("Номер не передано", "");
     return;
   }
   var phone = normalize(digits);
@@ -293,16 +292,18 @@
     btn.addEventListener("click", function(){
       if(spinning) return; spinning = true; btn.disabled = true;
       var prevText = btn.textContent; btn.textContent = "Крутимо…";
+      startSpin();                                  // обертання стартує ОДРАЗУ
       jsonp("action=spin&phone=" + encodeURIComponent(digits))
         .then(function(r){
-          if(r.status === "used"){ return noticeUsed(); }
-          if(r.status === "no_number"){ return noticeNoNumber(); }
+          if(r.status === "used"){ stopSpin(); return noticeUsed(); }
+          if(r.status === "no_number"){ stopSpin(); return noticeNoNumber(); }
           if(r.status !== "win" && r.status !== "lose"){
+            stopSpin();
             spinning = false; btn.disabled = false; btn.textContent = prevText;
             msgEl.textContent = "Не вдалося прокрутити. Спробуйте ще раз.";
             return;
           }
-          animateTo(r.sectorIndex, function(){
+          settleTo(r.sectorIndex, function(){
             btn.textContent = "Спробу використано";
             if(r.status === "win"){
               amountEl.textContent = r.amount + " грн";
@@ -316,6 +317,7 @@
           });
         })
         .catch(function(){
+          stopSpin();
           spinning = false; btn.disabled = false; btn.textContent = prevText;
           msgEl.textContent = "Зʼєднання перервалося. Спробуйте ще раз.";
         });
@@ -396,15 +398,54 @@
   }
 
   var _rotation = 0;
+  var _reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+
+  // ДЕМО: результат відомий одразу — стартуємо обертання з гальмуванням
   function animateTo(sectorIndex, onDone){
     var centerAngle = sectorIndex*SEG + SEG/2;
     var jitter = (Math.random()*2 - 1) * (SEG/2 - 3);
     var spins = 5 + Math.floor(Math.random()*3);
     _rotation += 360*spins - centerAngle - jitter;
     svg.style.transform = "rotate(" + _rotation + "deg)";
-    var dur = 5500;
-    if(window.matchMedia && window.matchMedia("(prefers-reduced-motion:reduce)").matches) dur = 1200;
+    setTimeout(onDone, (_reduced ? 1200 : 5500) + 120);
+  }
+
+  // РЕАЛЬНИЙ режим: колесо крутиться ОДРАЗУ на кліку (поки чекаємо сервер)
+  function startSpin(){
+    if(_reduced) return;                 // без безперервного обертання
+    svg.style.transition = "none";
+    svg.style.animation  = "spin360 0.7s linear infinite";
+  }
+  function currentAngle(){
+    var st = getComputedStyle(svg).transform;
+    var m = st && st.match(/matrix\(([^)]+)\)/);
+    if(!m) return 0;
+    var v = m[1].split(",");
+    var a = Math.atan2(parseFloat(v[1]), parseFloat(v[0])) * 180 / Math.PI;
+    return ((a % 360) + 360) % 360;
+  }
+  // коли прийшла відповідь — плавно догальмовуємо рівно на потрібному секторі
+  function settleTo(sectorIndex, onDone){
+    var centerAngle = sectorIndex*SEG + SEG/2;
+    var jitter = (Math.random()*2 - 1) * (SEG/2 - 3);
+    var desiredMod = ((((-centerAngle - jitter) % 360) + 360) % 360);
+    var cur = _reduced ? 0 : currentAngle();
+    var extra = _reduced ? 0 : 4;        // повних обертів на догальмовуванні
+    var delta = (((desiredMod - cur) % 360) + 360) % 360;
+    var finalAbs = cur + delta + 360*extra;
+    var dur = _reduced ? 700 : 4200;
+    svg.style.animation = "none";
+    svg.style.transition = "none";
+    svg.style.transform = "rotate(" + cur + "deg)";
+    void svg.offsetWidth;                // зафіксувати поточний кут перед переходом
+    svg.style.transition = "transform " + (dur/1000) + "s cubic-bezier(.12,.65,.07,1)";
+    svg.style.transform = "rotate(" + finalAbs + "deg)";
     setTimeout(onDone, dur + 120);
+  }
+  function stopSpin(){                    // зупинити обертання при помилці
+    svg.style.animation = "none";
+    svg.style.transition = "none";
+    svg.style.transform = "rotate(0deg)";
   }
 
   function buildWheel(){
