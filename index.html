@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Барабан призів · Тестова сторінка</title>
+<title>Колесо фортуни · Тестова сторінка</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Manrope:wght@400;500;600;700&display=swap&subset=cyrillic,cyrillic-ext,latin" rel="stylesheet">
@@ -132,7 +132,7 @@
          onerror="this.style.display='none'">
     <div class="slogan">Своє. Свіже.</div>
   </div>
-  <h1>Барабан <span class="green">призів</span></h1>
+  <h1>Колесо <span class="green">фортуни</span></h1>
   <div class="phone-line" id="phoneLine"></div>
 
   <div id="loader" class="loader hidden">Перевіряємо ваш номер<span class="dot">…</span></div>
@@ -148,7 +148,7 @@
       </div>
       <div class="hub"><span>КРУТИ!</span></div>
     </div>
-    <button id="spinBtn" class="btn">Крутити барабан</button>
+    <button id="spinBtn" class="btn">Крутити колесо</button>
     <div class="result-amount" id="amount"></div>
     <div class="msg" id="msg"></div>
   </div>
@@ -317,7 +317,7 @@
 
   function noticeUsed(){
     showNotice("Цей номер уже брав участь",
-      "Один номер — одна спроба.<br>Номер <b>" + displayPhone(phone) + "</b> вже використав свою спробу в барабані.");
+      "Один номер — одна спроба.<br>Номер <b>" + displayPhone(phone) + "</b> вже використав свою спробу в колесі фортуни.");
   }
   function noticeNoNumber(){
     showNotice("Номер не зареєстрований",
